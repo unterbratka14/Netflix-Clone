@@ -1,9 +1,34 @@
 import { MdFavoriteBorder, MdFavorite } from "react-icons/md";
 import { useState } from "react";
+import { UserAuth } from "../context/AuthContext";
+import { db } from "../firebase";
+import { arrayUnion, doc, updateDoc } from "firebase/firestore";
 
 const Movie = ({ item }) => {
   // eslint-disable-next-line no-unused-vars
   const [like, setLike] = useState(false); // This state is used to like the movies and then store them in the favorite list
+  // eslint-disable-next-line no-unused-vars
+  const [saved, setSaved] = useState(false);
+  const { user } = UserAuth();
+
+  const movieID = doc(db, "users", `${user?.email}`); //Referencing the database of users, then grabbing the specific user email
+
+  const saveShow = async () => {
+    if (user?.email) {
+      setLike(!like);
+      setSaved(true);
+      await updateDoc(movieID, {
+        savedShows: arrayUnion({
+          id: item.id,
+          title: item.title,
+          img: item.backdrop_path,
+        }),
+      });
+    } else {
+      alert("Please Log In to save the movie");
+    }
+  };
+
   return (
     <>
       <div className="w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280px] inline-block cursor-pointer relative p-2">
@@ -20,7 +45,7 @@ const Movie = ({ item }) => {
           <p className="white-space-normal text-xs md:text-sm font-bold flex justify-center items-center h-full text-center">
             {item?.title}
           </p>
-          <p>
+          <p onClick={saveShow}>
             {like ? (
               <MdFavorite className="absolute top-4 left-4 text-gray-300" />
             ) : (
